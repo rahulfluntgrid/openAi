@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Electricity Department Chatbot</title>
+
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap");
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Roboto", sans-serif;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: #fff;
+      min-height: 100vh;
+      padding: 20px;
+      position: relative;
+    }
+
+    .chat-container {
+      background: #ffffff10;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
+      padding: 20px;
+      max-width: 600px;
+      width: 100%;
+      margin: 0 auto;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+      position: relative;
+      transition: all 0.5s ease;
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .chat-container.hidden {
+      opacity: 0;
+      transform: scale(0.8);
+      pointer-events: none;
+    }
+
+    .chat-header {
+      text-align: center;
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .chat-header h2 {
+      font-weight: 500;
+      font-size: 1.8rem;
+    }
+
+    .robot-icon {
+      position: absolute;
+      top: -20px;
+      right: -20px;
+      background: #ff8c00;
+      color: #fff;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      transition: transform 0.3s ease;
+    }
+
+    .robot-icon:hover {
+      transform: scale(1.1);
+    }
+
+    .advanced-panel {
+      display: none;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 15px;
+      font-size: 0.9rem;
+    }
+
+    form {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    form input[type="text"] {
+      flex: 1;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    form button {
+      padding: 12px 20px;
+      background: #ff8c00;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .response-box {
+      max-height: 400px;
+      overflow-y: auto;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 15px;
+      border-radius: 8px;
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+
+    .response-box p {
+      margin-bottom: 12px;
+      padding: 10px;
+      border-radius: 8px;
+    }
+
+    .bot-message::before {
+      content: "🤖 ";
+    }
+
+    .typing-indicator {
+      font-style: italic;
+      color: #ffeb3b;
+    }
+
+    .floating-icon {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: #ff8c00;
+      color: white;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 28px;
+      cursor: pointer;
+      box-shadow: 0 0 15px rgba(255, 140, 0, 0.6);
+      z-index: 1000;
+      animation: pulse 2s infinite;
+      transition: transform 0.3s ease;
+    }
+
+    .floating-icon:hover {
+      transform: scale(1.15);
+      box-shadow: 0 0 25px rgba(255, 140, 0, 0.8);
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 15px rgba(255, 140, 0, 0.6); }
+      50% { box-shadow: 0 0 25px rgba(255, 140, 0, 1); }
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .controls i {
+      font-size: 24px;
+      padding: 10px;
+      border-radius: 50%;
+      background: #444;
+      cursor: pointer;
+      color: #fff;
+      transition: background 0.3s ease;
+    }
+
+    .controls i:hover {
+      background: #666;
+    }
+
+    .badge {
+      display: inline-block;
+      background: red;
+      color: white;
+      font-size: 0.75rem;
+      padding: 4px 8px;
+      border-radius: 8px;
+      margin-left: 10px;
+      animation: blink 1.5s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    @media screen and (max-width: 600px) {
+      .chat-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+        border-radius: 0;
+        z-index: 999;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="floating-icon" id="chatToggle">
+    <i class="fas fa-robot"></i>
+  </div>
+
+  <div class="chat-container hidden">
+    <header class="chat-header">
+      <h2>⚡ Smart Electricity Chatbot <span class="badge">LIVE</span></h2>
+      <div class="robot-icon" id="togglePanel"><i class="fas fa-robot"></i></div>
+    </header>
+
+    <div class="controls">
+      <i class="fas fa-microphone" id="micToggle" title="Start voice input"></i>
+      <i class="fas fa-language" id="langToggle" title="Toggle Hindi/English"></i>
+      <i class="fas fa-expand" id="fullscreenToggle" title="Toggle fullscreen"></i>
+    </div>
+
+    <form id="chatForm">
+      <input type="text" name="message" placeholder="Ask something..." required />
+      <button type="submit">Send</button>
+    </form>
+
+    <div id="responseBox" class="response-box"></div>
+
+    <div class="advanced-panel" id="advancedPanel">
+      <h3>Advanced Features</h3>
+      <ul>
+        <li>Smart meter integration</li>
+        <li>Live outage & maintenance alerts</li>
+        <li>Consumer analytics dashboard</li>
+        <li><a href="https://www.sbpdcl.co.in" style="color: #ffeb3b;" target="_blank">Visit SBPDCL</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById("chatForm");
+    const responseBox = document.getElementById("responseBox");
+    const chatContainer = document.querySelector(".chat-container");
+    const chatToggle = document.getElementById("chatToggle");
+    const chatIcon = chatToggle.querySelector("i");
+    const micToggle = document.getElementById("micToggle");
+    const langToggle = document.getElementById("langToggle");
+
+    let currentLang = "en";
+
+    // Load chat history
+    window.onload = () => {
+      const history = JSON.parse(localStorage.getItem("chatHistory")) || [];
+      history.forEach(msg => {
+        const el = document.createElement("p");
+        el.className = msg.type === "bot" ? "bot-message" : "";
+        el.innerHTML = `<strong>${msg.type === "bot" ? "Bot" : "You"}:</strong> ${msg.text}`;
+        responseBox.appendChild(el);
+      });
+    };
+
+    function saveMessage(type, text) {
+      const history = JSON.parse(localStorage.getItem("chatHistory")) || [];
+      history.push({ type, text });
+      localStorage.setItem("chatHistory", JSON.stringify(history));
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const message = form.message.value;
+      const userElement = document.createElement("p");
+      userElement.innerHTML = `<strong>You:</strong> ${message}`;
+      responseBox.appendChild(userElement);
+      saveMessage("user", message);
+      responseBox.scrollTop = responseBox.scrollHeight;
+
+      const typingEl = document.createElement("p");
+      typingEl.className = "typing-indicator";
+      typingEl.innerText = "Bot is typing...";
+      responseBox.appendChild(typingEl);
+
+      const res = await fetch("/chat/", {
+        method: "POST",
+        body: new FormData(form)
+      });
+      const data = await res.json();
+
+      responseBox.removeChild(typingEl);
+      const botElement = document.createElement("p");
+      botElement.className = "bot-message";
+      botElement.innerHTML = `<strong>Bot:</strong> ${data.reply}`;
+      responseBox.appendChild(botElement);
+      saveMessage("bot", data.reply);
+      responseBox.scrollTop = responseBox.scrollHeight;
+      form.reset();
+    });
+
+    chatToggle.addEventListener("click", () => {
+      chatContainer.classList.toggle("hidden");
+      chatIcon.classList.toggle("fa-robot");
+      chatIcon.classList.toggle("fa-xmark");
+    });
+
+    document.getElementById("togglePanel").addEventListener("click", () => {
+      const panel = document.getElementById("advancedPanel");
+      panel.style.display = panel.style.display === "block" ? "none" : "block";
+    });
+
+    document.getElementById("fullscreenToggle").addEventListener("click", () => {
+      chatContainer.classList.toggle("fullscreen");
+    });
+
+    micToggle.addEventListener("click", () => {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = currentLang === "en" ? "en-IN" : "hi-IN";
+      recognition.start();
+      recognition.onresult = (event) => {
+        form.message.value = event.results[0][0].transcript;
+      };
+    });
+
+    langToggle.addEventListener("click", () => {
+      currentLang = currentLang === "en" ? "hi" : "en";
+      alert(`Language switched to ${currentLang === "en" ? "English" : "Hindi"}`);
+    });
+  </script>
+</body>
+</html>
